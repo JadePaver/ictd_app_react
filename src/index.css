@@ -1,0 +1,222 @@
+@import "tailwindcss";
+
+/* Rebind Tailwind's `dark:` variant from `prefers-color-scheme` to the
+   explicit `data-theme` attribute ThemeContext sets on <html>, so the
+   toggle (not just the OS setting) drives every `dark:` utility class. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+  Design tokens follow the data-viz skill's method (dataviz/references/
+  palette.md) but with the categorical hues re-derived from the ICTD App's
+  own brand colors (ictd_app/lib/theme/color_constants.dart — AppColors,
+  primary #1B7343) instead of the skill's brand-neutral defaults. Each hue
+  was snapped into the required OKLCH lightness/chroma band per hue,
+  holding the source ICTD hue, then verified with
+  dataviz/scripts/validate_palette.js (all six checks pass in both modes;
+  gold/slot-8 carries the expected sub-3:1 "relief required" WARN the
+  skill flags for light yellows — mitigated by always direct-labeling it).
+
+  Both modes are selected, not an automatic filter flip — dark values are
+  separately validated steps, not a brightness-inverted light value.
+
+  Theme switching: index.html's inline script sets `data-theme` on <html>
+  before first paint (from localStorage, falling back to
+  `prefers-color-scheme` for first-time visitors) and ThemeContext keeps it
+  in sync after that. `data-theme` is therefore always present by the time
+  any CSS here applies — no separate `@media (prefers-color-scheme)` block
+  is needed (this is a JS-required SPA; there's no meaningful no-JS render
+  to progressively enhance).
+*/
+:root[data-theme="light"] {
+  --surface-1: #fcfcfb;
+  --surface-page: #f9f9f7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --gridline: #e1e0d9;
+  --baseline: #c3c2b7;
+  --border-hairline: rgba(11, 11, 11, 0.1);
+
+  --series-1: #1b7343; /* green — ICTD primary brand color */
+  --series-2: #1976d2; /* blue */
+  --series-3: #ef6c00; /* orange */
+  --series-4: #c62828; /* red */
+  --series-5: #762aa7; /* purple */
+  --series-6: #00899c; /* teal */
+  --series-7: #ad1457; /* magenta */
+  --series-8: #c49800; /* gold */
+
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --surface-1: #1a1a19;
+  --surface-page: #0d0d0d;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #898781;
+  --gridline: #2c2c2a;
+  --baseline: #383835;
+  --border-hairline: rgba(255, 255, 255, 0.1);
+
+  --series-1: #299e5e;
+  --series-2: #318def;
+  --series-3: #e66700;
+  --series-4: #db423d;
+  --series-5: #9855ca;
+  --series-6: #009db6;
+  --series-7: #ca3e71;
+  --series-8: #b88b00;
+
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+
+  color-scheme: dark;
+}
+
+@theme {
+  --color-surface: var(--surface-1);
+  --color-page: var(--surface-page);
+  --color-ink: var(--text-primary);
+  --color-ink-secondary: var(--text-secondary);
+  --color-ink-muted: var(--text-muted);
+  --color-gridline: var(--gridline);
+  --color-baseline: var(--baseline);
+
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+  --color-series-6: var(--series-6);
+  --color-series-7: var(--series-7);
+  --color-series-8: var(--series-8);
+
+  --color-good: var(--status-good);
+  --color-warning: var(--status-warning);
+  --color-serious: var(--status-serious);
+  --color-critical: var(--status-critical);
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--surface-page);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Native controls (checkboxes, radios, date pickers, progress) pick up
+     the brand green instead of the browser default blue. */
+  accent-color: var(--series-1);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--series-1) 25%, transparent);
+}
+
+/* Thin, theme-aware scrollbars (standard properties — Chromium ≥121 and
+   Firefox both honor these; older WebKit falls back to its default). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--baseline) transparent;
+}
+
+/* Keyboard-only focus ring. Mouse clicks don't match `:focus-visible`, so
+   pointer users never see it, while Tab users get a consistent brand ring
+   on any control that doesn't style its own. */
+:focus-visible {
+  outline: 2px solid var(--series-1);
+  outline-offset: 2px;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Gentle bob for floating decorative badges (LoginPage's FloatingBadge) —
+   each instance staggers its start via inline animation-delay so a group of
+   them doesn't bob in lockstep. */
+@keyframes float-badge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+/* Route-change entrance: the page content fades in and settles up a few
+   pixels. Applied by DashboardLayout on a wrapper keyed by pathname, so it
+   replays on navigation but not on in-page state changes. */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Modal entrance — backdrop fades, panel fades + settles down slightly.
+   One-shot mount animations (no exit; closing unmounts immediately, which
+   reads fine because the backdrop fade is what the eye tracks). */
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Flatten all animation/transition to near-zero for users who ask the OS
+   for reduced motion. Durations are near-zero rather than zero so
+   `transitionend`/`animationend`-driven logic (e.g. Snackbar removal)
+   still fires. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
