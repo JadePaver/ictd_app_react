@@ -13,6 +13,7 @@ import { UsersPage } from "./pages/users/UsersPage";
 import { ItemsListPage } from "./pages/inventory/ItemsListPage";
 import { MrListPage } from "./pages/inventory/MrListPage";
 import { CustodiansPage } from "./pages/inventory/CustodiansPage";
+import { TechnicianReportPage } from "./pages/reports/TechnicianReportPage";
 
 function App() {
   const { status } = useAuth();
@@ -33,6 +34,7 @@ function App() {
         <Route path="inventory" element={<ItemsListPage />} />
         <Route path="inventory/mr" element={<MrListPage />} />
         <Route path="inventory/custodians" element={<CustodiansPage />} />
+        <Route path="reports/technician" element={<TechnicianReportPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -44,16 +44,31 @@ function joinDateTime(
   })}`;
 }
 
-/** e.g. 3.4 -> "3.4 hrs", 30 -> "1.3 days" — switches units past a day so the
- * dashboard's response-time KPI doesn't read as an implausible "48 hrs". */
+/**
+ * A duration in hours, in whatever unit reads honestly: 0.04 becomes
+ * "2 min", 3.4 becomes "3.4 hrs", 30 becomes "1.3 days".
+ *
+ * Both switches exist because the raw number lies at the extremes. Past two
+ * days, "216.0 hrs" stops being a quantity anyone can picture. Below an
+ * hour, a fast reply rounds to "0.0 hrs", which reads as *no data* rather
+ * than as good news, and the technician report's "fastest completion" lands
+ * there routinely.
+ */
 export function formatHours(hours: number | null | undefined): string {
   if (hours == null) return "—";
+  const minutes = Math.round(hours * 60);
+  if (minutes < 1) return "<1 min";
+  // `minutes < 60` rather than `hours < 1`, so 0.999 hrs rounds up into
+  // "1.0 hrs" instead of reading as the nonsensical "60 min".
+  if (minutes < 60) return `${minutes} min`;
   if (hours < 48) return `${hours.toFixed(1)} hrs`;
   return `${(hours / 24).toFixed(1)} days`;
 }
 
+/** The same scale entered from days, so "0.3 days" reads as "7.2 hrs". */
 export function formatDays(days: number | null | undefined): string {
   if (days == null) return "—";
+  if (days < 1) return formatHours(days * 24);
   return `${days.toFixed(1)} days`;
 }
 

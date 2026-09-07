@@ -3,12 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { ChevronRightIcon, MegaphoneIcon, TicketIcon, WrenchIcon } from "../ui/icons";
 import type { ActivityEvent } from "../../types/api";
 
+/**
+ * One colour per entity, matching every other surface in the dashboard.
+ * Repair items are orange rather than the teal they used to be: teal against
+ * the brand green fails the data-viz normal-vision separation check, which
+ * the technician report's stacked chart puts side by side (see the
+ * `WORK_STREAMS` note in pages/reports/reportMetrics.ts). The hue was
+ * re-stepped everywhere at once so the entity never wears two colours.
+ */
 const KIND_CONFIG: Record<
   ActivityEvent["kind"],
   { label: string; icon: typeof TicketIcon; color: string; path: string }
 > = {
   technical_request: { label: "Technical request", icon: TicketIcon, color: "var(--series-1)", path: "/requests" },
-  repair_item: { label: "Repair item", icon: WrenchIcon, color: "var(--series-6)", path: "/repairs" },
+  repair_item: { label: "Repair item", icon: WrenchIcon, color: "var(--series-3)", path: "/repairs" },
   announcement: { label: "Announcement", icon: MegaphoneIcon, color: "var(--series-5)", path: "/announcements" },
 };
 

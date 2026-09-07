@@ -1,0 +1,32 @@
+{
+  /* Unit tests for the pure helpers, run by `npm test` through Node's own
+     test runner and type stripping (no test framework, no extra dependency).
+     They need Node's types, which the app project deliberately excludes, so
+     they get their own project rather than widening the app's. */
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+    "target": "es2023",
+    /* DOM because the modules under test are browser modules (csv.ts hands
+       the browser a download); the tests only call the pure parts, and Node
+       never evaluates the rest. */
+    "lib": ["ES2023", "DOM"],
+    "types": ["node"],
+    "skipLibCheck": true,
+    "strict": true,
+
+    /* Bundler mode */
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src/**/*.test.ts"]
+}

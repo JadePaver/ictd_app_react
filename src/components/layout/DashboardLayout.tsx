@@ -6,6 +6,7 @@ import { ThemeToggle } from "../ui/ThemeToggle";
 import { Avatar } from "../ui/Avatar";
 import {
   BuildingIcon,
+  ChartBarIcon,
   ChevronLeftIcon,
   DashboardIcon,
   IdCardIcon,
@@ -29,14 +30,19 @@ function initialSidebarCollapsed(): boolean {
   return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
 }
 
-/** Sidebar information architecture: Overview stands alone, then day-to-day
- * operations, then the inventory/custody cluster, then org directory data —
- * grouped so the nine destinations scan as four ideas instead of one long
- * undifferentiated list. */
+/** Sidebar information architecture: the two read-only reporting screens
+ * lead (Overview answers "how is the division doing?", Technician Report
+ * answers "how is one person doing?"), then day-to-day operations, then the
+ * inventory/custody cluster, then org directory data, grouped so the ten
+ * destinations scan as four ideas instead of one long undifferentiated
+ * list. */
 const NAV_GROUPS: { heading: string | null; items: { to: string; label: string; icon: NavIcon; end?: boolean }[] }[] = [
   {
     heading: null,
-    items: [{ to: "/", label: "Overview", icon: DashboardIcon, end: true }],
+    items: [
+      { to: "/", label: "Overview", icon: DashboardIcon, end: true },
+      { to: "/reports/technician", label: "Technician Report", icon: ChartBarIcon },
+    ],
   },
   {
     heading: "Operations",
@@ -246,8 +252,10 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <div className="relative hidden shrink-0 md:block">
+    // `data-app-shell`/`data-app-main` are the hooks index.css's print
+    // block uses to unlock this viewport-locked shell for paper.
+    <div data-app-shell className="flex h-screen overflow-hidden">
+      <div className="no-print relative hidden shrink-0 md:block">
         <aside
           className={clsx(
             "flex h-full flex-col border-r border-[color:var(--border-hairline)] bg-surface p-4 transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
@@ -262,7 +270,7 @@ export function DashboardLayout() {
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex shrink-0 items-center justify-between border-b border-[color:var(--border-hairline)] bg-surface px-3 py-3 md:hidden">
+        <header className="no-print flex shrink-0 items-center justify-between border-b border-[color:var(--border-hairline)] bg-surface px-3 py-3 md:hidden">
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setMobileNavOpen(true)}
@@ -278,7 +286,7 @@ export function DashboardLayout() {
           <ThemeToggle className="h-9 w-9" />
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        <main data-app-main className="flex-1 overflow-y-auto p-4 md:p-8">
           {/* Keyed by pathname so the entrance animation replays on route
               changes only — in-page state updates don't remount it. */}
           <div key={location.pathname} className="page-enter">

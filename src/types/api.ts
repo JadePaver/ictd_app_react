@@ -373,3 +373,161 @@ export interface MemorandumReceiptDetail extends MemorandumReceipt {
    * (which stays active and was never "superseded"). */
   precededBy: { id: number; mr_number: string } | null;
 }
+
+// ---- Technician performance reports ----
+
+export type ReportPeriodKey = "month" | "year" | "all";
+
+/** One row of the report page's technician picker. */
+export interface TechnicianRosterEntry {
+  id: number;
+  firstName: string | null;
+  middleName: string | null;
+  lastName: string | null;
+  /** Display name, already falling back to username / "User #id" server-side. */
+  name: string;
+  username: string | null;
+  joinedAt: string;
+  roleLabel: string | null;
+  departments: Department[];
+  /** False for someone who has attributable work but no current operator role. */
+  isOperator: boolean;
+  /** All-time action count, so the picker can say how much there is to look at. */
+  totalActions: number;
+}
+
+/**
+ * Every countable thing one technician did inside one period.
+ *
+ * `totalActions` is the sum of three attributed streams: request status
+ * updates, repair log entries, and announcements published. Inventory and
+ * custody bookkeeping is deliberately out of scope (see `SUMMARY_SOURCES`
+ * on the API side). `repairsReceived` and `repairsReleased` are views *into*
+ * `repairUpdates`, not additions to it, since booking an item in also writes
+ * a repair log.
+ */
+export interface TechnicianSummary {
+  totalActions: number;
+  activeDays: number;
+  busiestDay: { date: string; count: number } | null;
+
+  requestUpdates: number;
+  requestsHandled: number;
+  requestsAccepted: number;
+  requestsCompleted: number;
+  requestsDenied: number;
+  firstResponses: number;
+  avgFirstResponseHours: number | null;
+  /** Request raised to this technician's completion of it: the time-per-task figure. */
+  avgResolutionHours: number | null;
+  slowestResolutionHours: number | null;
+  fastestResolutionHours: number | null;
+
+  repairUpdates: number;
+  repairItemsTouched: number;
+  repairsReceived: number;
+  repairsReleased: number;
+  avgRepairTurnaroundDays: number | null;
+
+  announcementsPosted: number;
+}
+
+export interface TechnicianTrendPoint {
+  /** "2026-09-14" (daily) or "2026-09" (monthly). */
+  key: string;
+  /** Axis label: "14", "Sep", or "Sep 25" when the span crosses years. */
+  label: string;
+  requests: number;
+  repairs: number;
+  announcements: number;
+  total: number;
+}
+
+/** Per request type: how many they touched, how many they closed, how long it took. */
+export interface RequestTypeBreakdown {
+  typeId: number | null;
+  label: string;
+  handled: number;
+  completed: number;
+  denied: number;
+  avgResolutionHours: number | null;
+}
+
+/** Per repair stage: log entries written, and distinct items that reached it. */
+export interface RepairStageBreakdown {
+  statusId: number;
+  label: string;
+  color: string;
+  updates: number;
+  items: number;
+}
+
+/** What actually happened in one recorded action, so the sheet can pick an icon. */
+export type ReportOutcome =
+  | "accepted"
+  | "completed"
+  | "denied"
+  | "updated"
+  | "received"
+  | "released"
+  | "published";
+
+export interface TechnicianReportHighlight {
+  kind: "request" | "repair" | "announcement";
+  title: string;
+  subtitle: string;
+  outcome: ReportOutcome;
+  at: string;
+  /** Hours from the request being raised to this action, where meaningful. */
+  elapsedHours: number | null;
+}
+
+export interface TechnicianRanking {
+  /** 1-based, competition-ranked (equal totals share a rank). */
+  rank: number;
+  peerCount: number;
+  percentile: number;
+  teamTotal: number;
+  teamAverage: number;
+  leaderTotal: number;
+}
+
+export interface TechnicianReport {
+  technician: {
+    id: number;
+    firstName: string | null;
+    middleName: string | null;
+    lastName: string | null;
+    name: string;
+    username: string | null;
+    joinedAt: string;
+    roleLabel: string | null;
+    departments: Department[];
+  };
+  period: {
+    key: ReportPeriodKey;
+    label: string;
+    /** Null only on the all-time report. */
+    from: string | null;
+    to: string | null;
+    granularity: "day" | "month";
+    previousLabel: string | null;
+  };
+  summary: TechnicianSummary;
+  /** The same period one step back. Null on the all-time report. */
+  previous: TechnicianSummary | null;
+  trend: TechnicianTrendPoint[];
+  breakdowns: {
+    workMix: { key: string; label: string; count: number }[];
+    requestTypes: RequestTypeBreakdown[];
+    /** The same per-type figures one period back, for the type table's comparison column. */
+    previousRequestTypes: RequestTypeBreakdown[] | null;
+    requestsByDepartment: { label: string; count: number }[];
+    /** In pipeline order (by status id), not by volume: a repair flow reads as a sequence. */
+    repairStages: RepairStageBreakdown[];
+  };
+  /** Null when nobody on the team logged anything in the period. */
+  ranking: TechnicianRanking | null;
+  highlights: TechnicianReportHighlight[];
+  generatedAt: string;
+}

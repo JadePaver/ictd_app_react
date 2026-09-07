@@ -6,13 +6,20 @@ import { useId, type SVGProps } from "react";
  * package's barrel export doesn't tree-shake under this project's bundler,
  * so a static `import { X } from "lucide-react"` pulls in its entire
  * ~4,000-icon set (a ~500KB gzip regression for 4 icons).
+ *
+ * Every icon here is decorative: it always sits beside real text, or inside
+ * a control that carries its own `aria-label`. So they all default to
+ * `aria-hidden` and out of the tab order, which keeps a screen reader from
+ * announcing a stream of unlabelled graphics. An icon that ever needs to
+ * carry meaning on its own can override both, since `{...props}` is spread
+ * last: `<CheckIcon aria-hidden={false} role="img" aria-label="Passed" />`.
  */
 type IconProps = SVGProps<SVGSVGElement>;
 
 function createIcon(paths: string[]) {
   return function Icon({ size = 16, strokeWidth = 2, ...props }: IconProps & { size?: number }) {
     return (
-      <svg
+      <svg aria-hidden="true" focusable="false"
         width={size}
         height={size}
         viewBox="0 0 24 24"
@@ -50,7 +57,7 @@ export const TransferIcon = createIcon(["M3 7h15", "M14 3l4 4-4 4", "M21 17H6", 
 /** Circle + handle, built from primitives rather than a memorized lucide path. */
 export function SearchIcon({ size = 16, strokeWidth = 2, ...props }: IconProps & { size?: number }) {
   return (
-    <svg
+    <svg aria-hidden="true" focusable="false"
       width={size}
       height={size}
       viewBox="0 0 24 24"
@@ -89,7 +96,7 @@ export const WrenchIcon = createIcon([
  * doesn't depend on recalling exact upstream coordinates. */
 export function SunIcon({ size = 16, strokeWidth = 2, ...props }: IconProps & { size?: number }) {
   return (
-    <svg
+    <svg aria-hidden="true" focusable="false"
       width={size}
       height={size}
       viewBox="0 0 24 24"
@@ -119,7 +126,7 @@ export function SunIcon({ size = 16, strokeWidth = 2, ...props }: IconProps & { 
 export function MoonIcon({ size = 16, ...props }: IconProps & { size?: number }) {
   const maskId = useId();
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
       <mask id={maskId}>
         <rect width="24" height="24" fill="white" />
         <circle cx="15.5" cy="8.5" r="6.5" fill="black" />
@@ -141,7 +148,7 @@ export function QrCodeIcon({ size = 16, ...props }: IconProps & { size?: number 
     </g>
   );
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
       {finder(1.5, 1.5)}
       {finder(15.5, 1.5)}
       {finder(1.5, 15.5)}
@@ -156,7 +163,7 @@ export function QrCodeIcon({ size = 16, ...props }: IconProps & { size?: number 
  * 3-point checkmark — plain coordinates, not a memorized glyph. */
 export function ShieldCheckIcon({ size = 16, ...props }: IconProps & { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
       <path
         d="M5 4h14v6.5c0 6-4 9.5-7 10.5-3-1-7-4.5-7-10.5V4Z"
         stroke="currentColor"
@@ -172,7 +179,7 @@ export function ShieldCheckIcon({ size = 16, ...props }: IconProps & { size?: nu
  * tray, and a status dot — not a memorized glyph. */
 export function PrintIcon({ size = 16, ...props }: IconProps & { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
       <rect x="6" y="2.5" width="12" height="5.5" rx="0.5" stroke="currentColor" strokeWidth="1.6" />
       <rect x="2.5" y="8" width="19" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
       <rect x="6" y="14.5" width="12" height="7" rx="0.5" stroke="currentColor" strokeWidth="1.6" />
@@ -195,7 +202,7 @@ export function DashboardIcon({ size = 16, ...props }: IconProps & { size?: numb
     <rect key={`${x}-${y}`} x={x} y={y} width="7.5" height="7.5" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
   );
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
       {tile(3.25, 3.25)}
       {tile(13.25, 3.25)}
       {tile(3.25, 13.25)}
@@ -209,7 +216,7 @@ export function DashboardIcon({ size = 16, ...props }: IconProps & { size?: numb
 export function BuildingIcon({ size = 16, ...props }: IconProps & { size?: number }) {
   const win = (x: number, y: number) => <rect key={`${x}-${y}`} x={x} y={y} width="2.4" height="2.4" fill="currentColor" />;
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
       <rect x="4.5" y="2.5" width="15" height="19" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
       <path d="M10 21.5v-4a2 2 0 0 1 4 0v4" stroke="currentColor" strokeWidth="1.6" />
       {win(8, 6)}
@@ -225,7 +232,7 @@ export function BuildingIcon({ size = 16, ...props }: IconProps & { size?: numbe
  * order — geometric primitives, not a memorized glyph. */
 export function UsersIcon({ size = 16, ...props }: IconProps & { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" {...props}>
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" {...props}>
       <circle cx="9" cy="7.5" r="3.5" />
       <path d="M2.5 20.5v-1a6.5 6.5 0 0 1 13 0v1" />
       <path d="M16 4.4a3.5 3.5 0 0 1 0 6.2" />
@@ -238,7 +245,7 @@ export function UsersIcon({ size = 16, ...props }: IconProps & { size?: number }
  * text lines on the right — plain primitives, not a memorized glyph. */
 export function IdCardIcon({ size = 16, ...props }: IconProps & { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" {...props}>
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" {...props}>
       <rect x="2.5" y="5" width="19" height="14" rx="2" />
       <circle cx="8.5" cy="11" r="2" />
       <path d="M5.8 15.8a2.8 2.8 0 0 1 5.4 0" />
@@ -252,7 +259,7 @@ export function IdCardIcon({ size = 16, ...props }: IconProps & { size?: number 
  * across it — plain coordinates, not a memorized glyph. */
 export function InboxIcon({ size = 16, ...props }: IconProps & { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <rect x="3" y="4.5" width="18" height="15" rx="2" />
       <path d="M3 13.5h4.8l1.7 2.8h5l1.7-2.8H21" />
     </svg>
@@ -263,7 +270,7 @@ export function InboxIcon({ size = 16, ...props }: IconProps & { size?: number }
  * dot — plain coordinates, not a memorized glyph. */
 export function AlertTriangleIcon({ size = 16, ...props }: IconProps & { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M12 3.5 22 20H2Z" />
       <path d="M12 9.5v5" />
       <circle cx="12" cy="17" r="0.5" fill="currentColor" />
@@ -282,7 +289,7 @@ export const CheckIcon = createIcon(["M4 12.5l5 5L20 6.5"]);
  * angle, not a memorized glyph. */
 export function ClockIcon({ size = 16, ...props }: IconProps & { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5.5l4 2.3" />
     </svg>
@@ -291,3 +298,172 @@ export function ClockIcon({ size = 16, ...props }: IconProps & { size?: number }
 
 /** An envelope — outer rect plus the folded-flap V, not a memorized glyph. */
 export const MailIcon = createIcon(["M3 5h18v14H3z", "m3 6.5 9 6.5 9-6.5"]);
+
+/** An L-shaped axis with three columns of increasing height: the
+ * "report / performance" mark. Bars are plain rects on the 24×24 grid, not
+ * a memorized glyph. */
+export function ChartBarIcon({ size = 16, ...props }: IconProps & { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M4 3v16.5a1.5 1.5 0 0 0 1.5 1.5H21" />
+      <rect x="7.5" y="12.5" width="3.2" height="5" rx="0.8" fill="currentColor" stroke="none" />
+      <rect x="12.9" y="9" width="3.2" height="8.5" rx="0.8" fill="currentColor" stroke="none" />
+      <rect x="18.3" y="5.5" width="3.2" height="12" rx="0.8" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+/** A sheet of paper with a folded corner and two text lines: the
+ * "printable document" mark, built from primitives. */
+export function FileTextIcon({ size = 16, ...props }: IconProps & { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M14 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2.5V8h5.5" />
+      <path d="M8.5 13h7" />
+      <path d="M8.5 17h5" />
+    </svg>
+  );
+}
+
+/** A downward arrow into an open tray: the "download / export" affordance. */
+export const DownloadIcon = createIcon(["M12 3.5v11", "m7.5 10 4.5 4.5 4.5-4.5", "M4 19.5h16"]);
+
+/** A rosette: a medal circle with two ribbon tails, the "rank / standing"
+ * mark, drawn from primitives rather than a memorized glyph. */
+export function AwardIcon({ size = 16, ...props }: IconProps & { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="8.5" r="5.5" />
+      <path d="M8.6 13.2 7 21.5l5-2.8 5 2.8-1.6-8.3" />
+    </svg>
+  );
+}
+
+/** An upward trend arrow, the delta affordance; `TrendDownIcon` mirrors it. */
+export const TrendUpIcon = createIcon(["M3.5 17.5 10 11l4 4 6.5-6.5", "M15.5 8.5H20.5V13.5"]);
+export const TrendDownIcon = createIcon(["M3.5 8.5 10 15l4-4 6.5 6.5", "M15.5 17.5H20.5V12.5"]);
+
+// --- Request-type marks. The report maps a `request_types.label` onto one of
+// these by keyword, falling back to LifebuoyIcon for a type nobody has
+// taught it about yet, so adding a row to `request_types` never breaks the
+// sheet.
+
+/** A desktop monitor on a stand: the "hardware" mark. */
+export function MonitorIcon({ size = 16, ...props }: IconProps & { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="2.5" y="3.5" width="19" height="13" rx="2" />
+      <path d="M9 20.5h6" />
+      <path d="M12 16.5v4" />
+    </svg>
+  );
+}
+
+/** An application window with a title bar: the "software" mark. */
+export function AppWindowIcon({ size = 16, ...props }: IconProps & { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="2.5" y="4" width="19" height="16" rx="2" />
+      <path d="M2.5 9h19" />
+      <circle cx="6" cy="6.5" r="0.6" fill="currentColor" stroke="none" />
+      <circle cx="8.6" cy="6.5" r="0.6" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+/** Three broadcast arcs over a dot: the "network" mark. */
+export function WifiIcon({ size = 16, ...props }: IconProps & { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" {...props}>
+      <path d="M2.5 8.5a14 14 0 0 1 19 0" />
+      <path d="M5.8 12.2a9.2 9.2 0 0 1 12.4 0" />
+      <path d="M9 15.8a4.4 4.4 0 0 1 6 0" />
+      <circle cx="12" cy="19.2" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+/** A key: bit-ring plus shaft and teeth, the "account / access" mark. */
+export function KeyIcon({ size = 16, ...props }: IconProps & { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="7.5" cy="8" r="4.5" />
+      <path d="M10.7 11.3 20 20.5" />
+      <path d="m16.5 17 2-2" />
+      <path d="m19 19.5 2-2" />
+    </svg>
+  );
+}
+
+/** A ring buoy: the neutral fallback for an unrecognized request type. */
+export function LifebuoyIcon({ size = 16, ...props }: IconProps & { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="3.6" />
+      <path d="m5.6 5.6 3.8 3.8" />
+      <path d="m14.6 14.6 3.8 3.8" />
+      <path d="m18.4 5.6-3.8 3.8" />
+      <path d="m9.4 14.6-3.8 3.8" />
+    </svg>
+  );
+}
+
+// --- Outcome marks. Each pairs with a text label everywhere it appears, so
+// the icon reinforces the state rather than being the only carrier of it.
+
+/** Circle plus checkmark: a completed task. */
+export function CheckCircleIcon({ size = 16, ...props }: IconProps & { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8 12.3 2.7 2.7L16 9.7" />
+    </svg>
+  );
+}
+
+/** Circle plus cross: a denied request. */
+export function XCircleIcon({ size = 16, ...props }: IconProps & { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m9 9 6 6" />
+      <path d="m15 9-6 6" />
+    </svg>
+  );
+}
+
+/** Circle plus forward chevron: work accepted and under way. */
+export function PlayCircleIcon({ size = 16, ...props }: IconProps & { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m10.5 8.8 4.6 3.2-4.6 3.2z" />
+    </svg>
+  );
+}
+
+/** A stopwatch: crown, body, and a hand at the quarter, for elapsed-time figures. */
+export function TimerIcon({ size = 16, ...props }: IconProps & { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="13.5" r="7.5" />
+      <path d="M9.5 2.5h5" />
+      <path d="M12 2.5v3.5" />
+      <path d="M12 9.8v3.7h3" />
+    </svg>
+  );
+}
+
+/** A wall calendar: the "days worked" mark. */
+export function CalendarIcon({ size = 16, ...props }: IconProps & { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18" />
+      <path d="M8 3v4" />
+      <path d="M16 3v4" />
+    </svg>
+  );
+}

@@ -132,7 +132,7 @@ export function OverviewPage() {
           value={stats.repairItems.active}
           hint={`${stats.repairItems.total} total`}
           trend={stats.repairItems.trend.map((t) => t.count)}
-          trendColor="var(--series-6)"
+          trendColor="var(--series-3)"
           to="/repairs"
         />
         <StatTile
@@ -183,7 +183,7 @@ export function OverviewPage() {
               <TrendLineChart data={stats.technicalRequests.trend} />
             </ChartCard>
             <ChartCard title={`Items booked in — last ${days} days`}>
-              <TrendLineChart data={stats.repairItems.trend} color="var(--series-6)" />
+              <TrendLineChart data={stats.repairItems.trend} color="var(--series-3)" />
             </ChartCard>
           </div>
 
@@ -201,7 +201,7 @@ export function OverviewPage() {
             <ChartCard title="Repair items by status" sub="Current status, all items">
               <HorizontalBarChart
                 data={stats.repairItems.byStatus.map((s) => ({ label: s.label, count: s.count }))}
-                defaultColor="var(--series-6)"
+                defaultColor="var(--series-3)"
               />
             </ChartCard>
           </div>
@@ -217,7 +217,7 @@ export function OverviewPage() {
               ) : null}
               {stats.inventory.byCategory.length > 0 ? (
                 <ChartCard title="Inventory items by category" sub="Current breakdown, all items">
-                  <HorizontalBarChart data={stats.inventory.byCategory} defaultColor="var(--series-3)" />
+                  <HorizontalBarChart data={stats.inventory.byCategory} defaultColor="var(--series-2)" />
                 </ChartCard>
               ) : null}
             </div>
@@ -232,7 +232,7 @@ export function OverviewPage() {
               ) : null}
               {stats.repairItems.byOwnerDepartment.length > 0 ? (
                 <ChartCard title="Repair items by owner's department" sub="By the owner's assigned office, all-time">
-                  <HorizontalBarChart data={stats.repairItems.byOwnerDepartment} defaultColor="var(--series-6)" />
+                  <HorizontalBarChart data={stats.repairItems.byOwnerDepartment} defaultColor="var(--series-3)" />
                 </ChartCard>
               ) : null}
             </div>
@@ -242,7 +242,7 @@ export function OverviewPage() {
             <ChartCard title="Staff workload" sub="Requests responded to + repair items received, per operator, all-time">
               <HorizontalBarChart
                 data={workloadQuery.data.data.map((w) => ({ label: w.name, count: w.total }))}
-                defaultColor="var(--series-3)"
+                defaultColor="var(--series-2)"
               />
             </ChartCard>
           ) : null}

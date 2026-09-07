@@ -206,6 +206,149 @@ body {
   }
 }
 
+/* ---------------------------------------------------------------------
+   Print
+
+   The dashboard is a viewport-locked app shell (a `h-screen overflow-hidden`
+   flex row with one scrolling `<main>`), which by default prints exactly one
+   screenful and stops. The report page is meant to leave the screen, since
+   a technician prints it and hands it to a supervisor, so these rules unlock
+   the shell's scroll containers, drop the chrome, and force the light
+   palette onto whatever theme happens to be on.
+
+   Everything here keys off two attributes on the layout and two utility
+   classes, so any future printable page gets the same treatment for free.
+   --------------------------------------------------------------------- */
+
+/* Hidden on screen; revealed by the print block below. */
+.print-only {
+  display: none;
+}
+
+@media print {
+  /* A4 at 96dpi with 14mm margins leaves a content box about 688px wide, so
+     Tailwind's `md:` (768) and up never match on paper. Anything that needs
+     a multi-column layout in print says so with an explicit `print:` variant
+     at the call site; this block only handles what utilities can't express.
+
+     Root font-size is the one global lever: every Tailwind size is in rem,
+     so dropping it here scales the whole sheet down together and fits
+     noticeably more per page without touching a single component. */
+  html {
+    font-size: 12.5px;
+  }
+
+  /* Equal specificity to the theme blocks and declared later, so this wins
+     in both modes. A dark-mode sheet would otherwise print a black page. */
+  :root[data-theme="light"],
+  :root[data-theme="dark"] {
+    --surface-1: #ffffff;
+    --surface-page: #ffffff;
+    --text-primary: #111111;
+    --text-secondary: #3f3f3f;
+    --text-muted: #6b6b6b;
+    --gridline: #e2e2e2;
+    --baseline: #b8b8b8;
+    --border-hairline: rgba(0, 0, 0, 0.18);
+    color-scheme: light;
+  }
+
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  html,
+  body,
+  #root {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  /* The shell's flex row and its single scrolling pane both have to become
+     ordinary flow content, or the printout is one clipped screenful. */
+  [data-app-shell] {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  [data-app-main] {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  /* Chart fills and status tints are information, not decoration. Without
+     this most browsers strip them to save ink. */
+  .print-sheet,
+  .print-sheet * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Cards keep their structure but lose the screen's elevation, which prints
+     as a muddy gray halo. */
+  .print-sheet [class*="shadow"] {
+    box-shadow: none !important;
+  }
+
+  .print-block {
+    break-inside: avoid;
+  }
+
+  /* Available for a section that genuinely must start a fresh sheet. Not
+     used by the technician report: forcing the metric table onto its own
+     page left the bottom half of the previous one blank, and a long table
+     starting mid-page is perfectly readable once its header repeats. */
+  .print-page-break {
+    break-before: page;
+  }
+
+  /* A heading stranded at the foot of a page with its content overleaf is
+     the classic printed-report defect. */
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  /* A table that spans a page boundary reprints its own header, so the
+     second page's numbers still have columns you can read. Rows and banded
+     groups stay whole. */
+  thead {
+    display: table-header-group;
+  }
+
+  tr,
+  li {
+    break-inside: avoid;
+  }
+
+  /* Cards keep their hairline (it separates sections on paper) but lose the
+     screen's generous corner radius, which reads as a UI screenshot rather
+     than a document. */
+  .print-sheet [class*="rounded-xl"] {
+    border-radius: 4px;
+  }
+
+  /* The route-entrance animation can be mid-flight when the print dialog
+     snapshots the page, which prints a half-faded sheet. */
+  .page-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 /* Flatten all animation/transition to near-zero for users who ask the OS
    for reduced motion. Durations are near-zero rather than zero so
    `transitionend`/`animationend`-driven logic (e.g. Snackbar removal)

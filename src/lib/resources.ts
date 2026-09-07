@@ -21,9 +21,12 @@ import type {
   RepairStatusRef,
   RequestStatusFilter,
   RequestStatusRef,
+  ReportPeriodKey,
   RequestType,
   Role,
   TechnicalRequest,
+  TechnicianReport,
+  TechnicianRosterEntry,
   UserDirectoryEntry,
   WorkloadEntry,
 } from "../types/api";
@@ -36,6 +39,28 @@ export const dashboardApi = {
   stats: (days = 14) => api.get<{ data: DashboardStats }>(`/dashboard/stats${buildQuery({ days })}`),
   activity: (limit = 15) => api.get<{ data: ActivityEvent[] }>(`/dashboard/activity${buildQuery({ limit })}`),
   workload: (limit = 10) => api.get<{ data: WorkloadEntry[] }>(`/dashboard/workload${buildQuery({ limit })}`),
+};
+
+export interface TechnicianReportParams {
+  period: ReportPeriodKey;
+  /** Required for "month" and "year"; ignored for "all". */
+  year?: number;
+  /** 1-12. Required for "month" only. */
+  month?: number;
+}
+
+export const reportsApi = {
+  technicians: () => api.get<{ data: TechnicianRosterEntry[] }>("/reports/technicians"),
+  /**
+   * Period boundaries are cut in the *browser's* timezone, not UTC, so
+   * "September" means the operator's September, hence `tzOffset` riding
+   * along on every call. `getTimezoneOffset()` is minutes behind UTC, which
+   * is exactly what the API expects.
+   */
+  technician: (userId: number, params: TechnicianReportParams) =>
+    api.get<{ data: TechnicianReport }>(
+      `/reports/technicians/${userId}${buildQuery({ ...params, tzOffset: new Date().getTimezoneOffset() })}`,
+    ),
 };
 
 export type RequestSortBy = "createdAt" | "updatedAt" | "department" | "status" | "type";

@@ -7,6 +7,10 @@
     "types": ["vite/client"],
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
+    /* Already satisfied by every file in src/ before it was switched on,
+       so it costs nothing and starts enforcing the `| null` types the
+       codebase is already written against. */
+    "strict": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -22,5 +26,6 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"]
 }

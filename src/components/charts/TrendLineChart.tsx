@@ -20,7 +20,9 @@ export function TrendLineChart({ data, color = "var(--series-1)" }: { data: Tren
 
   return (
     <ResponsiveContainer width="100%" height={160}>
-      <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -12 }}>
+      {/* left: 0, not a negative margin. Pulling the y-axis off the plot to
+          save padding clips the leading digit of any multi-figure tick. */}
+      <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={color} stopOpacity={0.22} />
@@ -41,7 +43,7 @@ export function TrendLineChart({ data, color = "var(--series-1)" }: { data: Tren
           tick={{ fill: "var(--text-muted)", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
-          width={28}
+          width={36}
         />
         <Tooltip
           formatter={(value) => [String(value ?? 0), "Count"]}
@@ -62,6 +64,9 @@ export function TrendLineChart({ data, color = "var(--series-1)" }: { data: Tren
           fill={`url(#${gradientId})`}
           dot={false}
           activeDot={{ r: 4, stroke: "var(--surface-1)", strokeWidth: 2 }}
+          // Matches the other charts: a line still drawing itself when the
+          // print dialog snapshots the page prints incomplete.
+          isAnimationActive={false}
         />
       </AreaChart>
     </ResponsiveContainer>
