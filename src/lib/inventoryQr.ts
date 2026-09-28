@@ -1,7 +1,7 @@
 import type { InventoryItem } from "../types/api";
 
 /**
- * The text a scanner reads off an item's QR label — every fact on the item
+ * The text a scanner reads off an item's QR label: every fact on the item
  * record except custody/MR data (that changes hands; the label doesn't).
  * Plain human-readable lines, matching the same format the Flutter app's
  * `inventoryQrPayload()` produces (see ictd_app/lib/views/inventory/
@@ -20,6 +20,9 @@ export function inventoryQrPayload(item: InventoryItem): string {
   const lines = [
     `ICTD INVENTORY #${item.id}`,
     `Serial: ${item.serial_number}`,
+    // v2: the PAR it came in, when it has one. Placement is left off for
+    // the same reason custody is: it changes, and a printed label doesn't.
+    item.par?.par_code ? `PAR: ${item.par.par_code}` : null,
     item.item_categories ? `Category: ${item.item_categories.label}` : null,
     item.brand?.trim() ? `Brand: ${item.brand.trim()}` : null,
     item.model?.trim() ? `Model: ${item.model.trim()}` : null,

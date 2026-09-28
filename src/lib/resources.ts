@@ -2,6 +2,7 @@ import { api, buildQuery } from "./apiClient";
 import type {
   Announcement,
   Custodian,
+  CustodianDetail,
   CustodianStats,
   DashboardStats,
   DashboardUser,
@@ -10,11 +11,19 @@ import type {
   ActivityEvent,
   InventoryItem,
   InventoryItemDetail,
+  InventorySummary,
+  ItemAvailability,
+  ItemRef,
+  Par,
+  ParDetail,
+  Placement,
   ItemCategory,
   ItemStatusRef,
   MemorandumReceipt,
   MemorandumReceiptDetail,
+  MrSegment,
   MrStatusFilter,
+  MrSummary,
   Paginated,
   RepairItem,
   RepairItemCounts,
@@ -195,11 +204,44 @@ export const referenceApi = {
 
 export type InventorySortBy = "createdAt" | "updatedAt" | "serialNumber" | "brand" | "status";
 
-export interface InventoryItemListParams {
+export interface InventoryFilterParams {
   search?: string;
   categoryId?: number;
   statusId?: number;
   departmentId?: number;
+  /** "available": not on any active MR and not inside a PC. "issued": on one. */
+  availability?: ItemAvailability;
+  /** A PAR id, or "none" for items registered before PARs. */
+  parId?: number | "none";
+  placement?: Placement;
+  /** Units or parts (CPU, GPU, RAM, Storage). */
+  kind?: "unit" | "part";
+}
+
+/** Shared fields for registering one item or many under a PAR. */
+export interface RegisterFields {
+  parId: number;
+  categoryId: number;
+  statusId?: number;
+  brand?: string;
+  model?: string;
+  departmentId?: number | null;
+  description?: string;
+}
+
+export interface AssembleBody {
+  assetTag: string;
+  partIds: number[];
+  brand?: string;
+  model?: string;
+  departmentId?: number | null;
+  parId?: number | null;
+  description?: string;
+}
+
+export type RemovalStatus = "in_storage" | "under_repair" | "missing" | "decommissioned";
+
+export interface InventoryItemListParams extends InventoryFilterParams {
   sortBy?: InventorySortBy;
   sortDir?: SortDir;
   page?: number;
@@ -209,16 +251,23 @@ export interface InventoryItemListParams {
 export const inventoryItemsApi = {
   list: (params: InventoryItemListParams = {}) =>
     api.get<Paginated<InventoryItem>>(`/inventory-items${buildQuery(params)}`),
+  /** Faceted counts for the same filters (each facet ignores its own). */
+  summary: (params: InventoryFilterParams = {}) =>
+    api.get<{ data: InventorySummary }>(`/inventory-items/summary${buildQuery(params)}`),
   get: (id: number) => api.get<{ data: InventoryItemDetail }>(`/inventory-items/${id}`),
-  create: (body: {
-    categoryId: number;
-    brand?: string;
-    model?: string;
-    serialNumber: string;
-    departmentId?: number;
-    statusId?: number;
-    description?: string;
-  }) => api.post<{ data: InventoryItem }>("/inventory-items", body),
+  /** One item under a PAR (rule 16). */
+  create: (body: RegisterFields & { serialNumber: string }) => api.post<{ data: InventoryItem }>("/inventory-items", body),
+  /** Many serials, shared details, all or nothing (rule 24). */
+  bulk: (body: RegisterFields & { serialNumbers: string[] }) => api.post<{ data: InventoryItem[] }>("/inventory-items/bulk", body),
+  /** Which of these serials are already registered, any letter case. */
+  checkSerials: (serials: string[]) =>
+    api.post<{ data: { serial: string; item: ItemRef }[] }>("/inventory-items/check-serials", { serials }),
+  assignPar: (itemIds: number[], parId: number) =>
+    api.post<{ data: { updated: number } }>("/inventory-items/assign-par", { itemIds, parId }),
+  nextPcTag: () => api.get<{ data: { assetTag: string } }>("/inventory-items/next-pc-tag"),
+  assemble: (body: AssembleBody) => api.post<{ data: { id: number } }>("/inventory-items/assemble", body),
+  updateParts: (hostId: number, body: { install: number[]; remove: { partId: number; status: RemovalStatus }[]; notes?: string }) =>
+    api.post<{ data: { installed: number; removed: number } }>(`/inventory-items/${hostId}/parts`, body),
   update: (
     id: number,
     body: Partial<{
@@ -229,59 +278,73 @@ export const inventoryItemsApi = {
       departmentId: number | null;
       statusId: number;
       description: string | null;
+      parId: number | null;
     }>,
   ) => api.patch<{ data: InventoryItem }>(`/inventory-items/${id}`, body),
   remove: (id: number) => api.delete<{ ok: true }>(`/inventory-items/${id}`),
 };
 
-export type MrSortBy = "issuedAt" | "status" | "mrNumber";
+export type MrSortBy = "issuedAt" | "dueAt" | "status" | "mrNumber" | "custodian";
 
-export interface MrListParams {
-  status?: MrStatusFilter;
+export interface MrScopeParams {
   custodianId?: number;
   departmentId?: number;
-  overdue?: boolean;
   search?: string;
+}
+
+export interface MrListParams extends MrScopeParams {
+  segment?: MrSegment;
+  /** Legacy raw-status filter; ignored when `segment` is set. */
+  status?: MrStatusFilter;
+  /** Omit to let the API pick: soonest-due first for urgency segments,
+   * newest issued first otherwise. */
   sortBy?: MrSortBy;
   sortDir?: SortDir;
   page?: number;
   pageSize?: number;
 }
 
+export interface MrIssueBody {
+  mrNumber: string;
+  custodianId: number;
+  departmentId?: number | null;
+  itemIds: number[];
+  /** ISO timestamp; the end of the chosen day in the operator's timezone. */
+  expectedReturnAt?: string;
+  notes?: string;
+}
+
+export interface MrTransferBody {
+  mrNumber: string;
+  custodianId: number;
+  departmentId?: number | null;
+  expectedReturnAt?: string;
+  notes?: string;
+  /** Subset of the MR's active items to move. Omit to move all of them. */
+  itemIds?: number[];
+}
+
 export const mrApi = {
-  list: (params: MrListParams = {}) => api.get<Paginated<MemorandumReceipt>>(`/mr${buildQuery(params)}`),
+  list: (params: MrListParams = {}) =>
+    api.get<Paginated<MemorandumReceipt> & { sortBy: MrSortBy; sortDir: SortDir }>(`/mr${buildQuery(params)}`),
+  summary: (params: MrScopeParams = {}) => api.get<{ data: MrSummary }>(`/mr/summary${buildQuery(params)}`),
   get: (id: number) => api.get<{ data: MemorandumReceiptDetail }>(`/mr/${id}`),
   nextNumber: () => api.get<{ data: { mrNumber: string } }>("/mr/next-number"),
-  issue: (body: {
-    mrNumber: string;
-    custodianId: number;
-    departmentId?: number;
-    itemIds: number[];
-    expectedReturnAt?: string;
-    notes?: string;
-  }) => api.post<{ data: { id: number } }>("/mr", body),
+  issue: (body: MrIssueBody) => api.post<{ data: { id: number } }>("/mr", body),
   return: (id: number, notes?: string) => api.post<{ ok: true }>(`/mr/${id}/return`, { notes }),
-  transfer: (
-    id: number,
-    body: {
-      mrNumber: string;
-      custodianId: number;
-      departmentId?: number;
-      expectedReturnAt?: string;
-      notes?: string;
-      /** Subset of the MR's active items to move — omit to transfer all of them. */
-      itemIds?: number[];
-    },
-  ) => api.post<{ data: { id: number; isFullTransfer: boolean } }>(`/mr/${id}/transfer`, body),
+  transfer: (id: number, body: MrTransferBody) =>
+    api.post<{ data: { id: number; isFullTransfer: boolean } }>(`/mr/${id}/transfer`, body),
 };
 
-export type CustodianSortBy = "name" | "employeeNumber" | "department" | "activeItems";
+export type CustodianSortBy = "name" | "employeeNumber" | "department" | "activeItems" | "accountability";
 
 export interface CustodianListParams {
   search?: string;
   departmentId?: number;
   /** Custodians currently sitting on at least one overdue item. */
   overdueOnly?: boolean;
+  /** Custodians holding anything right now. */
+  holdingOnly?: boolean;
   sortBy?: CustodianSortBy;
   sortDir?: SortDir;
   page?: number;
@@ -291,7 +354,7 @@ export interface CustodianListParams {
 export const custodiansApi = {
   list: (params: CustodianListParams = {}) => api.get<Paginated<Custodian>>(`/custodians${buildQuery(params)}`),
   stats: () => api.get<{ data: CustodianStats }>("/custodians/stats"),
-  get: (id: number) => api.get<{ data: Custodian }>(`/custodians/${id}`),
+  get: (id: number) => api.get<{ data: CustodianDetail }>(`/custodians/${id}`),
   create: (body: {
     firstName: string;
     middleName?: string;
@@ -316,4 +379,34 @@ export const custodiansApi = {
     }>,
   ) => api.patch<{ data: Custodian }>(`/custodians/${id}`, body),
   remove: (id: number) => api.delete<{ ok: true }>(`/custodians/${id}`),
+};
+
+export interface ParListParams {
+  search?: string;
+  /** Exact code, ignoring case. */
+  code?: string;
+  sortBy?: "dateReceived" | "parCode" | "createdAt";
+  sortDir?: SortDir;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface ParBody {
+  parCode: string;
+  /** YYYY-MM-DD */
+  dateReceived: string;
+  referenceNo?: string | null;
+  supplier?: string | null;
+  /** "248,600.00" or a number; blank for none. */
+  amount?: string | number | null;
+  receivedBy?: string | null;
+  remarks?: string | null;
+}
+
+export const parsApi = {
+  list: (params: ParListParams = {}) => api.get<Paginated<Par>>(`/pars${buildQuery(params)}`),
+  get: (id: number) => api.get<{ data: ParDetail }>(`/pars/${id}`),
+  create: (body: ParBody) => api.post<{ data: Par }>("/pars", body),
+  update: (id: number, body: Partial<ParBody>) => api.patch<{ data: Par }>(`/pars/${id}`, body),
+  remove: (id: number) => api.delete<{ ok: true }>(`/pars/${id}`),
 };

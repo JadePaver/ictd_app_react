@@ -199,6 +199,8 @@ export interface DashboardStats {
     activeMrCount: number;
     /** Active MRs whose expected_return_at has passed. Always 0 if no MR has one set. */
     overdueMrCount: number;
+    /** Active MRs due within the next three days. */
+    dueSoonMrCount: number;
   };
 }
 
@@ -226,12 +228,66 @@ export interface Paginated<T> {
 }
 
 // ---- Computer & Computer Parts Tracking (inventory + MR) ----
+//
+// Three vocabularies that must never be blurred (context doc 3.3, 3.5, 3.6):
+//  - ItemStatusCode: an item's physical condition (In use, In storage, ...).
+//  - MrStatus: a memorandum receipt's lifecycle (active, returned, transferred).
+//  - A line's MrStatus: what happened to one item on one MR.
 
 export interface ItemCategory {
   id: number;
   code: string;
   label: string;
+  /** CPU, GPU, RAM, Storage: goes inside a computer (context doc v2, 3.3). */
+  is_part?: boolean;
+  /** Computer: can hold parts. */
+  can_host_parts?: boolean;
 }
+
+/** A purchase delivery, under the code printed on its paper PAR. */
+export interface Par {
+  id: number;
+  par_code: string;
+  /** Calendar day, YYYY-MM-DD. */
+  date_received: string;
+  reference_no: string | null;
+  supplier: string | null;
+  /** PAR total in pesos. PostgREST sends numeric as a number or a string. */
+  amount: number | string | null;
+  received_by: string | null;
+  remarks: string | null;
+  created_by: number | null;
+  created_at: string;
+  updated_at: string | null;
+  created_by_user: NamedUserRef | null;
+  itemCount?: number;
+}
+
+export interface ParDetail extends Par {
+  itemCount: number;
+  byCategory: { code: string; label: string; count: number }[];
+  items: InventoryItem[];
+}
+
+/** The short form of a PAR carried on each item. */
+export interface ParRef {
+  id: number;
+  par_code: string;
+  supplier: string | null;
+  date_received: string;
+}
+
+/** Enough to name an item in a chip or a message. */
+export interface ItemRef {
+  id: number;
+  serial_number: string;
+  name: string;
+}
+
+/** Where an item sits (context doc v2, 5.3). Not a status. */
+export type Placement = "all" | "top_level" | "loose" | "installed" | "host";
+
+export type ItemStatusCode = "in_storage" | "in_use" | "under_repair" | "decommissioned" | "missing";
 
 export interface ItemStatusRef {
   id: number;
@@ -241,14 +297,33 @@ export interface ItemStatusRef {
 }
 
 export type MrStatus = "active" | "returned" | "transferred";
-/** "closed" is a UI/query-level grouping ("returned or transferred"), never
- * a real `status` column value on an MR row. */
+
+/** The MR ledger's segments. On track / Due soon / Overdue partition the
+ * active MRs; Closed is every returned or transferred one. */
+export type MrSegment = "all" | "active" | "onTrack" | "dueSoon" | "overdue" | "closed";
+
+/** Legacy raw-status filter, still accepted by `GET /mr`. */
 export type MrStatusFilter = "all" | MrStatus | "closed";
 
+export type ItemAvailability = "all" | "available" | "issued";
+
+/** How a person is doing on what they hold. Computed by the API from active
+ * MRs, never stored. */
+export interface Accountability {
+  activeItemCount: number;
+  overdueItemCount: number;
+  activeMrCount: number;
+  overdueMrCount: number;
+  /** Earliest due date across their active MRs. */
+  nextDueAt: string | null;
+  /** Parts inside the PCs they hold. A PC counts once in activeItemCount. */
+  activeInstalledPartCount: number;
+}
+
 /** A person who can hold custody of equipment on an MR. Deliberately
- * separate from `users` — most custodians are staff without a dashboard
- * login (see the 20260711130000 migration's header comment for why). */
-export interface Custodian {
+ * separate from `users`: most custodians are staff without a dashboard
+ * login. */
+export interface Custodian extends Partial<Accountability> {
   id: number;
   first_name: string;
   middle_name: string | null;
@@ -262,13 +337,30 @@ export interface Custodian {
   created_at: string;
   updated_at: string | null;
   departments: Department | null;
-  /** How many items are currently out under this custodian's active MRs,
-   * and how many of those are overdue for return. Only populated by the
-   * list endpoint (CustodiansPage) — undefined wherever a bare `Custodian`
-   * comes from a context that doesn't compute it (CustodianPicker's search
-   * results, an MR's embedded custodian). */
-  activeItemCount?: number;
-  overdueItemCount?: number;
+}
+
+export interface CustodianHolding {
+  lineId: number;
+  /** When this item came onto the MR it is on now. */
+  since: string;
+  overdue: boolean;
+  item: {
+    id: number;
+    brand: string | null;
+    model: string | null;
+    serial_number: string;
+    is_assembled?: boolean;
+    item_categories: ItemCategory | null;
+    item_statuses: ItemStatusRef | null;
+  };
+  mr: { id: number; mr_number: string; expected_return_at: string | null };
+  /** Parts inside it, when the holding is a PC. */
+  partCount: number;
+}
+
+export interface CustodianDetail extends Omit<Custodian, keyof Accountability>, Accountability {
+  totalMrCount: number;
+  holdings: CustodianHolding[];
 }
 
 export interface CustodianStats {
@@ -279,13 +371,25 @@ export interface CustodianStats {
   totalOverdueItems: number;
 }
 
-/** Narrow custodian shape returned wherever an MR only needs to display who
- * held an item, not their full record (item custody history, MR list rows). */
+/** Narrow custodian shape used wherever only a name is needed. */
 export interface CustodianRef {
   id: number;
   first_name: string | null;
   middle_name: string | null;
   last_name: string | null;
+  employee_number?: string | null;
+}
+
+/** Who holds an item right now. Null means it is with ICTD. */
+export interface CurrentCustody {
+  mrId: number;
+  mrNumber: string;
+  /** When this unit came onto that MR (for a split, the split). */
+  since: string;
+  expectedReturnAt: string | null;
+  custodian: CustodianRef | null;
+  /** Set when this is an installed part: the custody is its PC's. */
+  via: ItemRef | null;
 }
 
 export interface InventoryItem {
@@ -304,10 +408,38 @@ export interface InventoryItem {
   item_statuses: ItemStatusRef | null;
   departments: Department | null;
   created_by_user: NamedUserRef | null;
+  par_id: number | null;
+  /** True for computers built by ICTD with Assemble PC; their serial is the asset tag. */
+  is_assembled: boolean;
+  /** The PC this part is inside right now. */
+  installed_in_item_id: number | null;
+  par: ParRef | null;
+  /** Present on list and detail responses. */
+  currentCustody?: CurrentCustody | null;
+  /** Parts installed in it right now (hosts only). */
+  partCount?: number;
+  /** The PC it is inside, when installed. */
+  installedIn?: ItemRef | null;
+}
+
+export interface InventorySummary {
+  /** Items matching every active filter. */
+  total: number;
+  /** Of those, how many are on an active MR. */
+  issued: number;
+  /** Status facet: honours every filter except status. */
+  byStatus: (ItemStatusRef & { count: number })[];
+  /** Category facet: honours every filter except category. */
+  byCategory: (ItemCategory & { count: number })[];
+  /** Unfiltered: feeds the standing missing-items banner. */
+  missing: { count: number; serials: string[] };
+  /** Items registered before PARs, waiting for Assign PAR. */
+  withoutPar: number;
 }
 
 export interface MrCustodyHistoryEntry {
-  id: number;
+  /** A line id, or "via-{installation}-{line}" for custody through a PC. */
+  id: number | string;
   status: MrStatus;
   created_at: string;
   updated_at: string | null;
@@ -317,14 +449,44 @@ export interface MrCustodyHistoryEntry {
     status: MrStatus;
     issued_at: string;
     returned_at: string | null;
+    expected_return_at: string | null;
+    transferred_from_id: number | null;
+    superseded_by: number | null;
     custodian: CustodianRef | null;
     issued_by_user: NamedUserRef | null;
     returned_by_user: NamedUserRef | null;
   } | null;
+  /** Set when the custody came through the PC this part was inside. */
+  via: ItemRef | null;
+  /** For custody through a PC: what closed the window. "removed" means the
+   * part was taken out of the PC; "mr" means the PC's MR closed. */
+  endedBy: "mr" | "removed" | null;
+}
+
+/** One part-in-PC record, seen from the item's side. */
+export interface InstallationEntry {
+  id: number;
+  /** "part": this item went into `other`. "host": `other` went into this item. */
+  role: "part" | "host";
+  part_item_id: number;
+  host_item_id: number;
+  installed_at: string;
+  removed_at: string | null;
+  notes: string | null;
+  installed_by_user: NamedUserRef | null;
+  removed_by_user: NamedUserRef | null;
+  status_after: { code: string; label: string } | null;
+  other: (ItemRef & { category: { code: string; label: string } | null }) | null;
 }
 
 export interface InventoryItemDetail extends InventoryItem {
+  currentCustody: CurrentCustody | null;
+  /** Every MR line this item has had, and its custody through PCs, newest first. */
   custodyHistory: MrCustodyHistoryEntry[];
+  /** Install and removal records, as part and as PC, newest first. */
+  installations: InstallationEntry[];
+  /** Parts inside it now (PCs only). */
+  parts: InventoryItem[];
 }
 
 export interface MrItemEntry {
@@ -339,14 +501,33 @@ export interface MrItemEntry {
     brand: string | null;
     model: string | null;
     serial_number: string;
+    department_id: number | null;
+    is_assembled?: boolean;
     item_categories: ItemCategory | null;
+    item_statuses: ItemStatusRef | null;
   } | null;
+  /** MR detail only: for a PC line, the parts inside it when this MR took it. */
+  partsAtIssue?: { id: number; serial_number: string; brand: string | null; model: string | null; item_categories: { code: string; label: string } | null }[];
+  /** Parts went in or came out while the PC was on this MR. */
+  partsChangedSinceIssue?: boolean;
+  partsChangedAt?: string | null;
+  /** Parts inside the PC right now; they go wherever it goes. */
+  partsNow?: number;
+}
+
+export interface MrCustodian extends CustodianRef {
+  employee_number: string | null;
+  contact_number: string | null;
+  email: string | null;
+  department_id: number | null;
+  departments: Department | null;
 }
 
 export interface MemorandumReceipt {
   id: number;
   mr_number: string;
   custodian_id: number;
+  /** The office this MR is filed under (not the custodian's, not the item's). */
   department_id: number | null;
   issued_by: number;
   issued_at: string;
@@ -354,24 +535,56 @@ export interface MemorandumReceipt {
   returned_at: string | null;
   returned_by: number | null;
   superseded_by: number | null;
+  /** The MR this one was transferred out of, for full transfers and splits. */
+  transferred_from_id: number | null;
   notes: string | null;
-  /** Nullable — MRs have no due date unless the operator sets one when issuing/transferring. */
+  /** Written at return time; never overwrites `notes`. */
+  return_notes: string | null;
+  /** Null means the MR can never be due soon or overdue. */
   expected_return_at: string | null;
   created_at: string;
   updated_at: string | null;
-  custodian: (CustodianRef & { employee_number: string | null; contact_number: string | null; email: string | null }) | null;
+  custodian: MrCustodian | null;
   departments: Department | null;
   issued_by_user: NamedUserRef | null;
   returned_by_user: NamedUserRef | null;
+  /** List responses only: every item the MR listed, and how many are still out. */
+  itemCount?: number;
+  activeItemCount?: number;
+}
+
+export interface MrLineageLink {
+  id: number;
+  mr_number: string;
+  /** "transfer": the whole MR moved (superseded_by). "split": some items did. */
+  kind: "transfer" | "split";
+}
+
+export interface MrSuccessor extends MrLineageLink {
+  status: MrStatus;
+  issued_at: string;
+  custodian: CustodianRef | null;
+  /** The items that moved onto it. */
+  itemIds: number[];
 }
 
 export interface MemorandumReceiptDetail extends MemorandumReceipt {
   items: MrItemEntry[];
-  /** The MR that closed out *into* this one via a full transfer, if any —
-   * the mirror image of `superseded_by` (which lives on the *old* MR).
-   * Null for a fresh issue, or for the *origin* side of a partial transfer
-   * (which stays active and was never "superseded"). */
-  precededBy: { id: number; mr_number: string } | null;
+  /** Where this MR came from, if it was born from a transfer. */
+  precededBy: MrLineageLink | null;
+  /** MRs later transferred out of this one, oldest first. */
+  successors: MrSuccessor[];
+}
+
+export interface MrSummary {
+  all: number;
+  active: number;
+  onTrack: number;
+  dueSoon: number;
+  overdue: number;
+  closed: number;
+  itemsOut: number;
+  overdueItems: number;
 }
 
 // ---- Technician performance reports ----

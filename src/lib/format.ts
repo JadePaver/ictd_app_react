@@ -15,6 +15,22 @@ export function formatDate(iso: string | null | undefined, fallback = "—"): st
   return new Date(iso).toLocaleDateString();
 }
 
+/** "Sep 27, 2026". The spelled month can't be misread the way 9/10 vs 10/9
+ * can, which matters on custody records that get printed and signed. */
+export function formatDateMedium(iso: string | null | undefined, fallback = "—"): string {
+  if (!iso) return fallback;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return date.toLocaleDateString(undefined, { dateStyle: "medium" });
+}
+
+/** A whole-day span in words: "today", "1 day", "12 days". */
+export function formatDayCount(days: number): string {
+  const whole = Math.floor(days);
+  if (whole <= 0) return "today";
+  return whole === 1 ? "1 day" : `${whole} days`;
+}
+
 /** "Jul 22, 2026 · 3:37 PM". A spelled-out month can't be misread the way
  * 7/22 vs 22/7 can, the middot keeps the two halves scannable as separate
  * facts, and seconds are dropped — no screen here is precise to the second,
@@ -120,4 +136,20 @@ export function formatCountdown(iso: string | null | undefined, fallback = "—"
   const days = Math.floor(hours / 24);
   if (days < 7) return `in ${days}d`;
   return formatDate(iso, fallback);
+}
+
+/** A calendar day stored as "YYYY-MM-DD" (a PAR's date received), as
+ * "Sep 14, 2026". Parsed as a local date: `new Date("2026-09-14")` would be
+ * UTC midnight, which shows as the 13th anywhere west of Greenwich. */
+export function formatCalendarDate(ymd: string | null | undefined, fallback = "—"): string {
+  const match = ymd ? /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd) : null;
+  if (!match) return fallback;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return date.toLocaleDateString(undefined, { dateStyle: "medium" });
+}
+
+/** Today as "YYYY-MM-DD" in local time, for date inputs. */
+export function todayYmd(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }

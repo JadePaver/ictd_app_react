@@ -9,7 +9,7 @@ import { StatTile } from "../components/ui/StatTile";
 import { Button } from "../components/ui/Button";
 import { PageSpinner } from "../components/ui/Spinner";
 import { ErrorState } from "../components/ui/EmptyState";
-import { AlertTriangleIcon } from "../components/ui/icons";
+import { AlertBanner } from "../components/ui/AlertBanner";
 import { TrendLineChart } from "../components/charts/TrendLineChart";
 import { HorizontalBarChart } from "../components/charts/HorizontalBarChart";
 import { ActivityFeed } from "../components/activity/ActivityFeed";
@@ -105,18 +105,16 @@ export function OverviewPage() {
       </div>
 
       {stats.inventory.overdueMrCount > 0 ? (
-        <div className="flex flex-wrap items-center gap-2.5 rounded-lg border border-critical/30 bg-critical/10 p-3">
-          <AlertTriangleIcon size={16} className="shrink-0 text-critical" />
-          <p className="min-w-0 flex-1 text-sm text-critical">
-            <span className="font-semibold">
-              {stats.inventory.overdueMrCount} memorandum receipt{stats.inventory.overdueMrCount === 1 ? "" : "s"}
-            </span>{" "}
-            <span className="text-ink-secondary">overdue for return — worth a follow-up.</span>
-          </p>
-          <Button variant="danger" onClick={() => navigate("/inventory/mr")}>
-            Review
-          </Button>
-        </div>
+        <AlertBanner
+          title={`${stats.inventory.overdueMrCount} memorandum receipt${stats.inventory.overdueMrCount === 1 ? "" : "s"} overdue for return`}
+          action={
+            <Button variant="danger" onClick={() => navigate("/inventory/mr?segment=overdue")}>
+              Review
+            </Button>
+          }
+        >
+          Past their expected return date and still active. Worth a follow-up.
+        </AlertBanner>
       ) : null}
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -139,9 +137,12 @@ export function OverviewPage() {
           label="Active MRs"
           value={stats.inventory.activeMrCount}
           hint={
-            stats.inventory.overdueMrCount > 0
-              ? `${stats.inventory.overdueMrCount} overdue for return`
-              : "None overdue for return"
+            [
+              stats.inventory.overdueMrCount > 0 ? `${stats.inventory.overdueMrCount} overdue for return` : "None overdue for return",
+              stats.inventory.dueSoonMrCount > 0 ? `${stats.inventory.dueSoonMrCount} due soon` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")
           }
           to="/inventory/mr"
         />

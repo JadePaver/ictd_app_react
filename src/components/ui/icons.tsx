@@ -467,3 +467,172 @@ export function CalendarIcon({ size = 16, ...props }: IconProps & { size?: numbe
     </svg>
   );
 }
+
+// --- Inventory marks. Category and item-status icons for the custody module,
+// drawn on the same 24x24 grid from plain primitives. Each one always sits
+// next to its text label, so the icon helps scanning but never carries the
+// meaning alone.
+
+/** A laptop: open screen over a keyboard deck. The "computer" category. */
+export const LaptopIcon = createIcon([
+  "M4 15V6a1.5 1.5 0 0 1 1.5-1.5h13A1.5 1.5 0 0 1 20 6v9",
+  "M2 18.5h20",
+  "M2 18.5 4 15h16l2 3.5",
+]);
+
+/** A keyboard: rounded deck, a row of key dots, and a space bar. */
+export const KeyboardIcon = createIcon([
+  "M3.5 6.5h17a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-17A1.5 1.5 0 0 1 2 16V8a1.5 1.5 0 0 1 1.5-1.5z",
+  "M6 10h.01",
+  "M10 10h.01",
+  "M14 10h.01",
+  "M18 10h.01",
+  "M7.5 14h9",
+]);
+
+/** A mouse: a capsule with the button split. */
+export const MouseIcon = createIcon(["M12 3a6 6 0 0 1 6 6v6a6 6 0 0 1-12 0V9a6 6 0 0 1 6-6z", "M12 7v4"]);
+
+/** A RAM stick: board, three chips, and edge pins. */
+export const MemoryIcon = createIcon([
+  "M3 7h18v8H3z",
+  "M6.5 9.5h2v3h-2z",
+  "M11 9.5h2v3h-2z",
+  "M15.5 9.5h2v3h-2z",
+  "M5.5 15v3",
+  "M9.5 15v3",
+  "M14.5 15v3",
+  "M18.5 15v3",
+]);
+
+/** A drive: a sloped-top enclosure with a status light. The "storage" category. */
+export const HardDriveIcon = createIcon([
+  "M5.5 5h13l2.5 8.5V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18v-4.5z",
+  "M3 13.5h18",
+  "M7 16.5h.01",
+  "M10 16.5h.01",
+]);
+
+/** A router: a flat box with two antennas and port lights. */
+export const RouterIcon = createIcon([
+  "M3.5 13h17a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-17A1.5 1.5 0 0 1 2 17.5v-3A1.5 1.5 0 0 1 3.5 13z",
+  "M6.5 13 5 6.5",
+  "M17.5 13 19 6.5",
+  "M6 16h.01",
+  "M9.5 16h.01",
+  "M13.5 16h4",
+]);
+
+/** A plug on a cable. The "other peripheral" category. */
+export const PlugIcon = createIcon(["M9 2.5v4", "M15 2.5v4", "M6.5 6.5h11v4a5.5 5.5 0 0 1-11 0z", "M12 16v5.5"]);
+
+/** An isometric box. The "other" category. */
+export const BoxIcon = createIcon(["M12 3 20.5 7.5v9L12 21l-8.5-4.5v-9z", "M3.5 7.5 12 12l8.5-4.5", "M12 12v9"]);
+
+/** A storeroom: pitched roof over a stocked bay. "In storage" / with ICTD. */
+export const WarehouseIcon = createIcon(["M3 21V9l9-5.5L21 9v12", "M7 21v-8h10v8", "M7 17h10"]);
+
+/** A person: head and shoulders. */
+export const UserIcon = createIcon(["M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", "M4.5 20.5a7.5 7.5 0 0 1 15 0"]);
+
+/** A question in a circle. The "missing" status. */
+export const HelpCircleIcon = createIcon([
+  "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+  "M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6",
+  "M12 17h.01",
+]);
+
+/** A bar in a circle. The "decommissioned" status. */
+export const MinusCircleIcon = createIcon(["M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M8 12h8"]);
+
+/** An info mark in a circle. */
+export const InfoIcon = createIcon(["M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M12 11v5", "M12 8h.01"]);
+
+export const PlusIcon = createIcon(["M12 5v14", "M5 12h14"]);
+
+export const ArrowRightIcon = createIcon(["M4 12h16", "m14 6 6 6-6 6"]);
+export const ArrowLeftIcon = createIcon(["M20 12H4", "m10 6-6 6 6 6"]);
+
+/** Two overlapping sheets: copy to clipboard. */
+export const CopyIcon = createIcon([
+  "M9.5 9h10A1.5 1.5 0 0 1 21 10.5v10a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 8 20.5v-10A1.5 1.5 0 0 1 9.5 9z",
+  "M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-10A1.5 1.5 0 0 1 4.5 2h10A1.5 1.5 0 0 1 16 3.5V4",
+]);
+
+/** A trunk with one branch peeling off to the right: a split transfer. */
+export const SplitIcon = createIcon(["M6 3v18", "M6 8.5a6 6 0 0 0 6 6h3.5", "m13 12 2.5 2.5L13 17"]);
+
+/** An arrow curling back: return to ICTD. */
+export const ReturnIcon = createIcon(["M9 14 4 9l5-5", "M4 9h10.5a5.5 5.5 0 0 1 0 11H11"]);
+
+export const PencilIcon = createIcon(["M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z", "M14.5 5.5l4 4"]);
+
+export const TrashIcon = createIcon([
+  "M3 6h18",
+  "M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6",
+  "M5.5 6l1 13.5A1.5 1.5 0 0 0 8 21h8a1.5 1.5 0 0 0 1.5-1.5L18.5 6",
+  "M10 11v6",
+  "M14 11v6",
+]);
+
+/** A mobile phone: the contact-number mark. */
+export const PhoneIcon = createIcon([
+  "M8 2.5h8a1.5 1.5 0 0 1 1.5 1.5v16a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 20V4A1.5 1.5 0 0 1 8 2.5z",
+  "M11 18.5h2",
+]);
+
+/** A luggage-style tag with its eyelet: the serial-number mark. */
+export const TagIcon = createIcon(["M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z", "M7.5 7.5h.01"]);
+
+/** A till receipt with a zigzag foot and printed lines: the PAR mark. */
+export const ReceiptIcon = createIcon([
+  "M5 2.5h14v19l-2.5-1.5-2.3 1.5-2.2-1.5-2.2 1.5-2.3-1.5L5 21.5z",
+  "M8.5 7h7",
+  "M8.5 10.5h7",
+  "M8.5 14h4",
+]);
+
+/** A processor: a square die with pins on every side. The "cpu" category. */
+export const CpuIcon = createIcon([
+  "M6.5 6.5h11v11h-11z",
+  "M9.5 9.5h5v5h-5z",
+  "M9.5 3v3.5",
+  "M14.5 3v3.5",
+  "M9.5 17.5V21",
+  "M14.5 17.5V21",
+  "M3 9.5h3.5",
+  "M3 14.5h3.5",
+  "M17.5 9.5H21",
+  "M17.5 14.5H21",
+]);
+
+/** A graphics card: a long board with a fan and the bracket edge. The "gpu" category. */
+export const GpuIcon = createIcon([
+  "M2 6.5h18.5a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5H2",
+  "M2 4v17",
+  "M11 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+  "M17.5 10v4",
+  "M5.5 17.5v2.5",
+  "M9 17.5v2.5",
+  "M12.5 17.5v2.5",
+]);
+
+/** A desktop tower with drive bay and power light: an assembled PC. */
+export const TowerIcon = createIcon([
+  "M7.5 2.5h9A1.5 1.5 0 0 1 18 4v16a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 20V4a1.5 1.5 0 0 1 1.5-1.5z",
+  "M9 6.5h6",
+  "M9 9.5h6",
+  "M12 17.5h.01",
+]);
+
+/** Three stacked sheets: placement (loose, installed, holds parts). */
+export const LayersIcon = createIcon(["M12 3 21.5 8 12 13 2.5 8z", "M2.5 12.5 12 17.5l9.5-5", "M2.5 16.5 12 21.5l9.5-5"]);
+
+/** Three blocks and a fourth being added: put parts together into a PC. */
+export const AssembleIcon = createIcon([
+  "M4 4h6v6H4z",
+  "M14 4h6v6h-6z",
+  "M4 14h6v6H4z",
+  "M17 14v6",
+  "M14 17h6",
+]);

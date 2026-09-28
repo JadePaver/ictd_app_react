@@ -10,13 +10,21 @@ const openModalStack: symbol[] = [];
 
 export function Modal({
   title,
+  subtitle,
   onClose,
   children,
+  footer,
   width = "max-w-lg",
 }: {
-  title: string;
+  title: ReactNode;
+  /** One line under the title: what this dialog is about, in context. */
+  subtitle?: ReactNode;
   onClose: () => void;
   children: ReactNode;
+  /** Actions pinned to the bottom edge of the viewport while the dialog
+   * scrolls, so a long form never hides its submit button. A form inside
+   * the body reaches a footer button through the button's `form` attribute. */
+  footer?: ReactNode;
   width?: string;
 }) {
   const titleId = useId();
@@ -70,19 +78,27 @@ export function Modal({
         tabIndex={-1}
         className={`w-full ${width} rounded-2xl border border-[color:var(--border-hairline)] bg-surface/70 p-6 shadow-xl outline-none backdrop-blur-xl backdrop-saturate-150 [animation:modal-panel-in_240ms_cubic-bezier(0.22,1,0.36,1)]`}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 id={titleId} className="text-base font-semibold text-ink">
-            {title}
-          </h2>
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h2 id={titleId} className="text-base font-semibold text-ink">
+              {title}
+            </h2>
+            {subtitle ? <div className="mt-0.5 text-sm text-ink-muted">{subtitle}</div> : null}
+          </div>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink dark:hover:bg-white/[0.08]"
+            className="-mt-1 -mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink dark:hover:bg-white/[0.08]"
           >
             <XIcon size={16} />
           </button>
         </div>
         {children}
+        {footer ? (
+          <div className="sticky bottom-0 z-10 -mx-6 mt-6 -mb-6 flex flex-wrap items-center gap-2 rounded-b-2xl border-t border-[color:var(--border-hairline)] bg-surface/95 px-6 py-4 backdrop-blur-xl">
+            {footer}
+          </div>
+        ) : null}
       </div>
     </div>,
     document.body,

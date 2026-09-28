@@ -2,8 +2,9 @@ import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
 import { PrintIcon } from "../../components/ui/icons";
 import { escapeHtml } from "../../lib/printHtml";
-import { mrItemLabel } from "../../lib/mrMetrics";
-import { fullName, formatDate, formatDateTime } from "../../lib/format";
+import { mrItemLabel, partAtIssueLabel } from "../../lib/mrMetrics";
+import { fullName, formatDateMedium, formatDateTime } from "../../lib/format";
+import { lineStatusLabel, officeName } from "../../lib/inventory";
 import { MrReceiptCard } from "./MrReceiptCard";
 import type { MemorandumReceiptDetail } from "../../types/api";
 
@@ -12,18 +13,13 @@ const ACKNOWLEDGMENT =
   "responsibility for its proper care, use, and safekeeping, and agree to return or transfer it through proper channels.";
 
 /**
- * Printable "memorandum receipt" — the physical document this whole
- * feature is named after. Everything else in the MR workflow (the ledger,
- * the detail view, issue/transfer) is about tracking custody digitally;
- * this is the one artifact meant to leave the screen entirely — printed,
- * signed by hand, and either filed or handed to the custodian, the same
- * way InventoryItemQrModal's label leaves the screen to become a physical
- * sticker.
+ * The printable memorandum receipt: the one artifact in the MR workflow
+ * meant to leave the screen, to be signed by hand and filed or handed to the
+ * custodian (context doc 10.2).
  *
- * Available for any MR regardless of status — reprinting a closed one for
- * audit/record purposes is a normal, legitimate use, so every item's own
- * current status is shown rather than silently implying they're all still
- * out just because the MR once covered them.
+ * Available for any MR. Reprinting a closed one for the record is normal, so
+ * each line shows what happened to that item on this MR, and a closed MR
+ * says when and by whom it was closed.
  */
 export function MrPrintModal({ mr, onClose }: { mr: MemorandumReceiptDetail; onClose: () => void }) {
   function print() {
@@ -32,7 +28,7 @@ export function MrPrintModal({ mr, onClose }: { mr: MemorandumReceiptDetail; onC
 
     const custodianLine = [
       mr.custodian?.employee_number ? `Employee #${mr.custodian.employee_number}` : null,
-      mr.departments?.label,
+      mr.departments ? officeName(mr.departments) : null,
     ]
       .filter(Boolean)
       .join(" · ");
@@ -42,16 +38,43 @@ export function MrPrintModal({ mr, onClose }: { mr: MemorandumReceiptDetail; onC
         (entry) => `
           <tr>
             <td>${escapeHtml(mrItemLabel(entry))}</td>
-            <td class="mono">${escapeHtml(entry.inventory_items?.serial_number ?? "—")}</td>
-            <td class="status">${escapeHtml(entry.status)}</td>
-          </tr>`,
+            <td class="mono">${escapeHtml(entry.inventory_items?.serial_number ?? "None")}</td>
+            <td class="status">${escapeHtml(lineStatusLabel(entry.status))}</td>
+          </tr>${(entry.partsAtIssue ?? [])
+            .map((part) => `
+          <tr class="part">
+            <td colspan="3">↳ ${escapeHtml(partAtIssueLabel(part))}</td>
+          </tr>`)
+            .join("")}`,
       )
       .join("");
+
+    // A PC's parts are printed as they were at issue; if any went in or
+    // came out since, the paper says so rather than pretending otherwise.
+    const changed = mr.items.filter((entry) => entry.partsChangedSinceIssue);
+    const changedNote = changed.length
+      ? `<p class="footnote">${changed
+          .map((entry) =>
+            escapeHtml(
+              `Parts changed since issue on ${formatDateMedium(entry.partsChangedAt ?? null)} for ${entry.inventory_items?.serial_number ?? "a PC"}. See the PC's history.`,
+            ),
+          )
+          .join("<br />")}</p>`
+      : "";
+
+    // A reprint of a closed MR says so, and by whom, so the paper copy in a
+    // file can't be mistaken for one still in force.
+    const closedLine =
+      mr.status === "active" || !mr.returned_at
+        ? ""
+        : `<div class="row"><div class="field"><p class="label">${mr.status === "returned" ? "Returned" : "Transferred"}</p><p class="value">${escapeHtml(
+            formatDateTime(mr.returned_at),
+          )} by ${escapeHtml(fullName(mr.returned_by_user))}</p></div></div>`;
 
     win.document.write(`<!doctype html>
 <html>
   <head>
-    <title>Memorandum Receipt — ${escapeHtml(mr.mr_number)}</title>
+    <title>Memorandum Receipt ${escapeHtml(mr.mr_number)}</title>
     <style>
       * { box-sizing: border-box; }
       body { margin: 0; padding: 40px; font-family: system-ui, -apple-system, sans-serif; background: #fff; color: #111; }
@@ -68,7 +91,9 @@ export function MrPrintModal({ mr, onClose }: { mr: MemorandumReceiptDetail; onC
       th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
       th { background: #f4f4f2; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; color: #555; }
       td.mono { font-family: ui-monospace, monospace; }
-      td.status { text-transform: capitalize; color: #555; }
+      td.status { color: #555; }
+      tr.part td { border-top: none; padding: 3px 8px 3px 26px; font-size: 10.5px; color: #444; }
+      .footnote { margin: -12px 0 16px; font-size: 10px; color: #666; font-style: italic; }
       .ack { font-size: 10.5px; line-height: 1.6; color: #333; margin: 22px 0 0; padding-top: 14px; border-top: 1px solid #ddd; }
       .signatures { display: flex; justify-content: space-between; gap: 40px; margin-top: 48px; }
       .sig { flex: 1; text-align: center; }
@@ -95,7 +120,7 @@ export function MrPrintModal({ mr, onClose }: { mr: MemorandumReceiptDetail; onC
         </div>
         <div class="field">
           <p class="label">Details</p>
-          <p class="value">${escapeHtml(custodianLine || "—")}</p>
+          <p class="value">${escapeHtml(custodianLine || "None on file")}</p>
         </div>
       </div>
       <div class="row">
@@ -105,7 +130,7 @@ export function MrPrintModal({ mr, onClose }: { mr: MemorandumReceiptDetail; onC
         </div>
         <div class="field">
           <p class="label">Expected return</p>
-          <p class="value">${mr.expected_return_at ? escapeHtml(formatDate(mr.expected_return_at)) : "No fixed date"}</p>
+          <p class="value">${mr.expected_return_at ? escapeHtml(formatDateMedium(mr.expected_return_at)) : "No fixed date"}</p>
         </div>
       </div>
 
@@ -117,10 +142,17 @@ export function MrPrintModal({ mr, onClose }: { mr: MemorandumReceiptDetail; onC
           ${rows || `<tr><td colspan="3" style="color:#999">No items on this MR.</td></tr>`}
         </tbody>
       </table>
+      ${changedNote}
 
       ${
         mr.notes
           ? `<div class="row"><div class="field"><p class="label">Notes</p><p class="value">${escapeHtml(mr.notes)}</p></div></div>`
+          : ""
+      }
+      ${closedLine}
+      ${
+        mr.return_notes
+          ? `<div class="row"><div class="field"><p class="label">Return note</p><p class="value">${escapeHtml(mr.return_notes)}</p></div></div>`
           : ""
       }
 
@@ -148,25 +180,29 @@ export function MrPrintModal({ mr, onClose }: { mr: MemorandumReceiptDetail; onC
   }
 
   return (
-    <Modal title="Print memorandum receipt" onClose={onClose} width="max-w-md">
-      <div className="flex flex-col gap-4">
-        <p className="text-sm text-ink-secondary">
-          What prints below — the itemized list, plus signature lines for issuer and custodian. Every item shows its
-          current status, so reprinting a closed MR still reads accurately.
-        </p>
-
-        <div className="flex justify-center">
-          <MrReceiptCard mr={mr} className="w-full max-w-[280px]" />
-        </div>
-
-        <div className="flex justify-end gap-2 border-t border-[color:var(--border-hairline)] pt-4">
-          <Button variant="ghost" onClick={onClose}>
+    <Modal
+      title="Print memorandum receipt"
+      subtitle="An A4 form with the itemised list and signature lines for issuer and custodian."
+      onClose={onClose}
+      width="max-w-md"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} className="ml-auto">
             Close
           </Button>
-          <Button onClick={print} className="gap-2">
+          <Button onClick={print}>
             <PrintIcon size={14} />
             Print
           </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-ink-secondary">
+          Each line shows what happened to that item on this MR, so a reprint of a closed MR still reads accurately.
+        </p>
+        <div className="flex justify-center">
+          <MrReceiptCard mr={mr} className="w-full max-w-[280px]" />
         </div>
       </div>
     </Modal>

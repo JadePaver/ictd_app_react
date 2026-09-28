@@ -36,6 +36,12 @@
   --gridline: #e1e0d9;
   --baseline: #c3c2b7;
   --border-hairline: rgba(11, 11, 11, 0.1);
+  /* Text fields get a firmer edge and a solid fill than the hairline that
+     divides sections, so an empty field still reads as a place to type on
+     the frosted modal panel. */
+  --field-fill: #ffffff;
+  --field-line: rgba(11, 11, 11, 0.22);
+  --field-line-hover: rgba(11, 11, 11, 0.38);
 
   --series-1: #1b7343; /* green — ICTD primary brand color */
   --series-2: #1976d2; /* blue */
@@ -63,6 +69,9 @@
   --gridline: #2c2c2a;
   --baseline: #383835;
   --border-hairline: rgba(255, 255, 255, 0.1);
+  --field-fill: #1f1f1e;
+  --field-line: rgba(255, 255, 255, 0.17);
+  --field-line-hover: rgba(255, 255, 255, 0.3);
 
   --series-1: #299e5e;
   --series-2: #318def;
@@ -89,6 +98,9 @@
   --color-ink-muted: var(--text-muted);
   --color-gridline: var(--gridline);
   --color-baseline: var(--baseline);
+  --color-field: var(--field-fill);
+  --color-field-line: var(--field-line);
+  --color-field-line-hover: var(--field-line-hover);
 
   --color-series-1: var(--series-1);
   --color-series-2: var(--series-2);
@@ -146,6 +158,21 @@ body {
 :focus-visible {
   outline: 2px solid var(--series-1);
   outline-offset: 2px;
+}
+
+/* Text fields draw their own focus state (green border plus a soft halo,
+   see fieldInputClass), and a field is focus-visible even on a mouse click.
+   The generic outline on top of that would double the ring. */
+input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]):focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+/* A dialog panel takes focus programmatically on open so Escape and screen
+   readers work at once. That focus is bookkeeping, not a control the user
+   moved to, so the panel itself never wears the ring. */
+[role="dialog"]:focus-visible {
+  outline: none;
 }
 
 .tabular-nums {

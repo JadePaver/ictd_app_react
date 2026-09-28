@@ -2,6 +2,8 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { ChevronDownIcon, XIcon } from "./icons";
+import { fieldInputClass } from "./FormField";
+import { useFieldState } from "./formFieldContext";
 
 /** `label` is nullable because several reference tables type it that way —
  * a null label renders and matches as an em dash. */
@@ -39,6 +41,7 @@ export function Combobox({
   autoFocus,
   onBlur,
   className,
+  ariaLabel,
 }: {
   id?: string;
   value: number | "" | null | undefined;
@@ -53,8 +56,11 @@ export function Combobox({
   onBlur?: () => void;
   /** Width/layout classes for the wrapper (defaults to full width). */
   className?: string;
+  /** Accessible name for a combobox with no <label>, e.g. a toolbar filter. */
+  ariaLabel?: string;
 }) {
   const listboxId = useId();
+  const field = useFieldState();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -170,9 +176,12 @@ export function Combobox({
     <div ref={wrapperRef} className={clsx("relative", className ?? "w-full")}>
       <input
         ref={inputRef}
-        id={id}
+        id={id ?? field?.id}
         type="text"
         role="combobox"
+        aria-label={ariaLabel}
+        aria-invalid={field?.invalid || undefined}
+        aria-describedby={field?.messageId}
         aria-expanded={open}
         aria-controls={listboxId}
         aria-autocomplete="list"
@@ -199,7 +208,7 @@ export function Combobox({
             onBlur?.();
           }
         }}
-        className="w-full rounded-lg border border-[color:var(--border-hairline)] bg-transparent py-2 pr-14 pl-3 text-sm text-ink outline-none transition-[border-color,box-shadow] duration-150 focus:border-series-1 focus:ring-2 focus:ring-series-1/15 disabled:cursor-not-allowed disabled:opacity-50"
+        className={clsx(fieldInputClass, "pr-14")}
       />
       <div className="absolute inset-y-0 right-2 flex items-center gap-0.5">
         {clearable && selected && !disabled ? (

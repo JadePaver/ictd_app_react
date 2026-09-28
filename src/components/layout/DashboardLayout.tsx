@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { useAuth } from "../../context/AuthContext";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { Avatar } from "../ui/Avatar";
+import { ToastProvider } from "../ui/Toast";
 import {
   BuildingIcon,
   ChartBarIcon,
@@ -14,6 +15,7 @@ import {
   MegaphoneIcon,
   MenuIcon,
   QrCodeIcon,
+  ReceiptIcon,
   TicketIcon,
   TransferIcon,
   UsersIcon,
@@ -56,6 +58,7 @@ const NAV_GROUPS: { heading: string | null; items: { to: string; label: string; 
     heading: "Inventory",
     items: [
       { to: "/inventory", label: "Inventory", icon: QrCodeIcon, end: true },
+      { to: "/inventory/pars", label: "PARs", icon: ReceiptIcon },
       { to: "/inventory/mr", label: "Memorandum Receipts", icon: TransferIcon },
       { to: "/inventory/custodians", label: "Custodians", icon: IdCardIcon },
     ],
@@ -289,9 +292,11 @@ export function DashboardLayout() {
         <main data-app-main className="flex-1 overflow-y-auto p-4 md:p-8">
           {/* Keyed by pathname so the entrance animation replays on route
               changes only — in-page state updates don't remount it. */}
-          <div key={location.pathname} className="page-enter">
-            <Outlet />
-          </div>
+          <ToastProvider className={collapsed ? "md:left-20" : "md:left-60"}>
+            <div key={location.pathname} className="page-enter">
+              <Outlet />
+            </div>
+          </ToastProvider>
         </main>
       </div>
 

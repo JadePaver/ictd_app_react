@@ -5,6 +5,7 @@ import { PrintIcon } from "../../components/ui/icons";
 import { personColor } from "../../components/ui/Avatar";
 import { escapeHtml } from "../../lib/printHtml";
 import { fullName } from "../../lib/format";
+import { officeName } from "../../lib/inventory";
 import { CustodianBadgeCard } from "./CustodianBadgeCard";
 import type { Custodian } from "../../types/api";
 
@@ -28,14 +29,14 @@ export function CustodianBadgePrintModal({ custodian, onClose }: { custodian: Cu
     const dataUrl = canvas.toDataURL("image/png");
     const initials =
       ((custodian.first_name?.trim()?.[0] ?? "") + (custodian.last_name?.trim()?.[0] ?? "")).toUpperCase() || "?";
-    const meta = [custodian.employee_number ? `#${custodian.employee_number}` : null, custodian.departments?.label]
+    const meta = [custodian.employee_number ? `#${custodian.employee_number}` : null, custodian.departments ? officeName(custodian.departments) : null]
       .filter(Boolean)
       .join(" · ");
 
     win.document.write(`<!doctype html>
 <html>
   <head>
-    <title>ID Badge — ${escapeHtml(fullName(custodian))}</title>
+    <title>ID Badge: ${escapeHtml(fullName(custodian))}</title>
     <style>
       * { box-sizing: border-box; }
       body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: system-ui, -apple-system, sans-serif; background: #f2f2f0; }
@@ -75,10 +76,10 @@ export function CustodianBadgePrintModal({ custodian, onClose }: { custodian: Cu
   return (
     <Modal title="Print ID badge" onClose={onClose} width="max-w-sm">
       <div className="flex flex-col gap-4">
-        <p className="text-sm text-ink-secondary">Prints a badge-holder-ready card — cut out and slot into a lanyard or clip.</p>
+        <p className="text-sm text-ink-secondary">Prints a card sized for a badge holder. Cut it out and slot it into a lanyard or clip. The custody tag is left off, since it changes and the badge does not.</p>
 
         <div className="flex justify-center">
-          <CustodianBadgeCard custodian={custodian} className="w-full max-w-[220px]" qrRef={qrRef} />
+          <CustodianBadgeCard custodian={custodian} className="w-full max-w-[220px]" qrRef={qrRef} hideTag />
         </div>
 
         <div className="flex justify-end gap-2 border-t border-[color:var(--border-hairline)] pt-4">
